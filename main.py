@@ -24,6 +24,22 @@ from pathlib import Path
 # One line, deadpan, a real complaint filed straight, the turn in the last few words.
 REVIEW = "One star for sleep. Eight hours a night for my whole life and the only thing I get back is not being tired."
 
+# The gate the sealed scorer checks, kept here so the entry can refuse to write an
+# invalid entry.txt rather than lose the grade to a typo.
+MIN_CHARS = 1
+MAX_CHARS = 160
+
+
+def validate(review: str) -> str:
+    """Hold `review` to the gate: 1..160 characters, one line, not only white space."""
+    if not MIN_CHARS <= len(review) <= MAX_CHARS:
+        raise ValueError(f"review is {len(review)} characters, outside {MIN_CHARS}..{MAX_CHARS}")
+    if review.strip() == "":
+        raise ValueError("review is only white space")
+    if "\n" in review or "\r" in review:
+        raise ValueError("review is not a single line")
+    return review
+
 
 def output_dir() -> Path:
     """The directory entry.txt goes in.
@@ -37,10 +53,11 @@ def output_dir() -> Path:
 
 
 def write_entry(target: Path) -> Path:
-    """Write the review to <target>/entry.txt, one line, no trailing newline."""
+    """Write the (validated) review to <target>/entry.txt, one line, no trailing newline."""
+    text = validate(REVIEW)
     target.mkdir(parents=True, exist_ok=True)
     entry = target / "entry.txt"
-    entry.write_text(REVIEW, encoding="utf-8")
+    entry.write_text(text, encoding="utf-8", newline="")
     return entry
 
 
